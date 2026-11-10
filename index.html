@@ -29,6 +29,8 @@
       --used-bg: #D3EBE4;
       --skip: #6B6660;
       --skip-bg: #E8E6E2;
+      --arch: #6B6660;
+      --arch-bg: #E6E3DE;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -53,6 +55,8 @@
         --used-bg: #1A322C;
         --skip: #A8A29A;
         --skip-bg: #2A2825;
+        --arch: #A8A29A;
+        --arch-bg: #2A2825;
       }
     }
 
@@ -69,7 +73,7 @@
       -webkit-font-smoothing: antialiased;
       padding-bottom: calc(32px + var(--safe-bottom));
     }
-    button, input { font-family: inherit; }
+    button, input, textarea { font-family: inherit; }
     button { color: inherit; }
     a { color: var(--accent); }
 
@@ -219,10 +223,21 @@
       vertical-align: 1px;
       background: currentColor;
     }
-    .pill[data-status="想試"] .dot { background: var(--want); }
-    .pill[data-status="試過了"] .dot { background: var(--tried); }
-    .pill[data-status="已用在工作"] .dot { background: var(--used); }
-    .pill[data-status="不適合"] .dot { background: var(--skip); }
+    .pill[data-status="想試"] .dot,
+    .pill[data-edit-status="想試"] .dot { background: var(--want); }
+    .pill[data-status="試過了"] .dot,
+    .pill[data-edit-status="試過了"] .dot { background: var(--tried); }
+    .pill[data-status="已用在工作"] .dot,
+    .pill[data-edit-status="已用在工作"] .dot { background: var(--used); }
+    .pill[data-status="不適合"] .dot,
+    .pill[data-edit-status="不適合"] .dot { background: var(--skip); }
+    .pill[data-status="已封存"] .dot,
+    .pill[data-edit-status="已封存"] .dot { background: var(--arch); }
+    .pill.is-toggle.is-on {
+      background: var(--skip-bg);
+      border-color: color-mix(in srgb, var(--arch) 35%, var(--line));
+      color: var(--arch);
+    }
 
     .seg {
       display: flex;
@@ -284,6 +299,11 @@
     .card[data-status="試過了"] { border-top-color: var(--tried); }
     .card[data-status="已用在工作"] { border-top-color: var(--used); }
     .card[data-status="不適合"] { border-top-color: var(--skip); }
+    .card[data-status="已封存"] {
+      border-top-color: var(--arch);
+      background: color-mix(in srgb, var(--surface) 86%, var(--arch-bg));
+      opacity: 0.78;
+    }
 
     .card-top {
       display: flex;
@@ -306,6 +326,7 @@
     .badge-試過了 { background: var(--tried-bg); color: var(--tried); }
     .badge-已用在工作 { background: var(--used-bg); color: var(--used); }
     .badge-不適合 { background: var(--skip-bg); color: var(--skip); }
+    .badge-已封存 { background: var(--arch-bg); color: var(--arch); }
 
     .platform {
       display: inline-flex;
@@ -416,6 +437,197 @@
       padding: 8px 0 2px;
       cursor: pointer;
     }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .edit-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .edit-btn:hover {
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+      color: var(--accent);
+    }
+    .lock-btn {
+      appearance: none;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 8px 0 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(27, 25, 22, 0.46);
+      z-index: 80;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .sheet-backdrop[hidden] { display: none !important; }
+    .sheet {
+      background: var(--surface);
+      width: 100%;
+      max-width: 440px;
+      border-radius: 22px 22px 0 0;
+      padding: 10px 20px calc(20px + var(--safe-bottom));
+      box-shadow: var(--shadow);
+      max-height: min(92dvh, 740px);
+      overflow: auto;
+    }
+    .sheet-sm { max-width: 400px; }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--line);
+      border-radius: 999px;
+      margin: 4px auto 14px;
+    }
+    .sheet h3 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .sheet-item-title {
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      overflow-wrap: break-word;
+    }
+    .sheet .lbl { margin-top: 14px; }
+    .edit-statuses {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .archive-btn {
+      appearance: none;
+      margin-top: 10px;
+      width: 100%;
+      border: 1px dashed var(--line);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .archive-btn.is-on {
+      background: var(--arch-bg);
+      color: var(--arch);
+      border-style: solid;
+      border-color: color-mix(in srgb, var(--arch) 35%, var(--line));
+    }
+    .sheet textarea,
+    .sheet input[type="password"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 16px;
+      color: var(--ink);
+      outline: none;
+    }
+    .sheet textarea {
+      resize: vertical;
+      min-height: 96px;
+      line-height: 1.55;
+    }
+    .sheet input[type="password"]:focus,
+    .sheet textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .sheet-error {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #B42318;
+    }
+    .sheet-hint {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .sheet-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .sheet-actions button {
+      appearance: none;
+      flex: 1;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-ghost {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+    }
+    .btn-primary {
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      .btn-primary { color: #141311; }
+      .sheet-error { color: #F5A3A0; }
+      .sheet-backdrop { background: rgba(0, 0, 0, 0.62); }
+    }
+    .sheet-actions button:disabled { opacity: 0.55; cursor: default; }
+    @media (min-width: 640px) {
+      .sheet-backdrop {
+        align-items: center;
+        padding: 24px;
+      }
+      .sheet { border-radius: 20px; }
+      .sheet-handle { display: none; }
+    }
+    body.sheet-open { overflow: hidden; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(24px + var(--safe-bottom));
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--surface);
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 100;
+      box-shadow: var(--shadow);
+      max-width: calc(100% - 32px);
+      text-align: center;
+    }
+    .toast[hidden] { display: none !important; }
 
     /* States */
     .skeletons { display: contents; }
@@ -491,6 +703,7 @@
         <div class="stat"><span class="stat-label">想試</span><span class="stat-num">—</span></div>
         <div class="stat"><span class="stat-label">已嘗試</span><span class="stat-num">—</span></div>
       </div>
+      <button type="button" class="lock-btn" id="lockBtn" hidden>鎖定</button>
     </div>
   </header>
 
@@ -516,6 +729,7 @@
           <button type="button" class="pill" data-status="試過了"><span class="dot"></span>試過了</button>
           <button type="button" class="pill" data-status="已用在工作"><span class="dot"></span>已用在工作</button>
           <button type="button" class="pill" data-status="不適合"><span class="dot"></span>不適合</button>
+          <button type="button" class="pill is-toggle" id="showArchived" aria-pressed="false">顯示封存</button>
         </div>
         <div class="pills" id="tagPills" aria-label="標籤"></div>
       </div>
@@ -531,11 +745,57 @@
     </div>
   </main>
 
+  <div class="sheet-backdrop" id="editOverlay" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h3 id="editTitle">編輯狀態</h3>
+      <p class="sheet-item-title" id="editItemTitle"></p>
+      <div class="lbl">狀態</div>
+      <div class="edit-statuses" id="editStatuses">
+        <button type="button" class="pill" data-edit-status="想試"><span class="dot"></span>想試</button>
+        <button type="button" class="pill" data-edit-status="試過了"><span class="dot"></span>試過了</button>
+        <button type="button" class="pill" data-edit-status="已用在工作"><span class="dot"></span>已用在工作</button>
+        <button type="button" class="pill" data-edit-status="不適合"><span class="dot"></span>不適合</button>
+      </div>
+      <button type="button" class="archive-btn" id="archiveBtn">封存</button>
+      <div class="lbl">心得筆記</div>
+      <textarea id="editNote" rows="4" placeholder="寫下你試過之後的心得…"></textarea>
+      <div class="sheet-error" id="editError" hidden></div>
+      <div class="sheet-actions">
+        <button type="button" class="btn-ghost" id="editCancel">取消</button>
+        <button type="button" class="btn-primary" id="editSave">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-backdrop" id="pwOverlay" hidden>
+    <div class="sheet sheet-sm" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <h3 id="pwTitle">輸入密碼</h3>
+      <p class="sheet-hint">只有你能修改知識庫，輸入一次後這個裝置會記住。</p>
+      <input id="pwInput" type="password" autocomplete="current-password" placeholder="密碼">
+      <div class="sheet-error" id="pwError" hidden></div>
+      <div class="sheet-actions">
+        <button type="button" class="btn-ghost" id="pwCancel">取消</button>
+        <button type="button" class="btn-primary" id="pwOk">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
   <script>
     let DATA = [];
     let filterTag = '';
     let filterUse = '';
     let filterStatus = '';
+    let showArchived = false;
+    let editIndex = -1;
+    let pendingStatus = '';
+    let pwResolver = null;
+    let toastTimer = 0;
+    const PW_KEY = 'kbEditPw';
+    const STATUS_OPTS = ['想試', '試過了', '已用在工作', '不適合'];
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({
@@ -564,13 +824,17 @@
     }
 
     function setStats() {
-      const want = DATA.filter((r) => r['狀態'] === '想試').length;
-      const tried = DATA.filter((r) => r['狀態'] && r['狀態'] !== '想試').length;
-      $('stats').innerHTML = [
-        ['總數', DATA.length],
+      const active = DATA.filter((r) => r['狀態'] !== '已封存');
+      const want = active.filter((r) => r['狀態'] === '想試').length;
+      const tried = active.filter((r) => r['狀態'] && r['狀態'] !== '想試').length;
+      const archived = DATA.filter((r) => r['狀態'] === '已封存').length;
+      const items = [
+        ['總數', active.length],
         ['想試', want],
-        ['已嘗試', tried]
-      ].map(([label, n]) =>
+        ['已嘗試', tried],
+        ['封存', archived]
+      ];
+      $('stats').innerHTML = items.map(([label, n]) =>
         `<div class="stat"><span class="stat-label">${label}</span><span class="stat-num">${n}</span></div>`
       ).join('');
     }
@@ -604,7 +868,6 @@
         ${meta ? `<div class="meta">${esc(meta)}</div>` : ''}
         ${tg.length ? `<div class="tags">${tg.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         ${r['重點摘要'] ? `<div class="summary is-clamp" id="sum-${i}">${linkify(r['重點摘要'])}</div>` : ''}
-        ${extra ? `<button type="button" class="toggle" data-toggle="${i}" aria-expanded="false">展開</button>` : ''}
         ${extra ? `<div class="more" id="more-${i}">
           ${r['可以怎麼用'] ? `<div class="lbl">可以怎麼用</div><div class="txt">${linkify(r['可以怎麼用'])}</div>` : ''}
           ${r['嘗試日期'] ? `<div class="lbl">嘗試日期</div><div class="txt">${esc(r['嘗試日期'])}</div>` : ''}
@@ -614,22 +877,34 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>` : ''}
         </div>` : ''}
+        <div class="card-actions">
+          ${extra ? `<button type="button" class="toggle" data-toggle="${i}" aria-expanded="false">展開</button>` : '<span></span>'}
+          <button type="button" class="edit-btn" data-edit="${i}">編輯</button>
+        </div>
       </article>`;
     }
 
     function render() {
       const q = $('q').value.trim().toLowerCase();
-      const rows = DATA.filter((r) =>
-        (!q || Object.values(r).join(' ').toLowerCase().includes(q)) &&
-        (!filterTag || tagsOf(r).includes(filterTag)) &&
-        (!filterUse || r['用途'] === filterUse) &&
-        (!filterStatus || r['狀態'] === filterStatus)
-      );
+      const rows = DATA.filter((r) => {
+        const archived = r['狀態'] === '已封存';
+        if (archived && !showArchived) return false;
+        return (!q || Object.values(r).join(' ').toLowerCase().includes(q)) &&
+          (!filterTag || tagsOf(r).includes(filterTag)) &&
+          (!filterUse || r['用途'] === filterUse) &&
+          (!filterStatus || r['狀態'] === filterStatus);
+      });
       const filtered = !!(q || filterTag || filterUse || filterStatus);
       if (!rows.length) {
+        const hiddenArch = !showArchived && DATA.some((r) => r['狀態'] === '已封存');
+        const hint = !DATA.length
+          ? '知識庫還沒有內容。'
+          : hiddenArch && !filtered
+            ? '有些項目已封存，打開「顯示封存」就可以看到。'
+            : '試試調整篩選條件，或改一下關鍵字。';
         $('list').innerHTML = `<div class="state">
           <h3>沒有符合的項目</h3>
-          <p>${DATA.length ? '試試調整篩選條件，或改一下關鍵字。' : '知識庫還沒有內容。'}</p>
+          <p>${hint}</p>
           ${filtered ? '<button type="button" class="clear-btn" id="clearFilters">清除篩選</button>' : ''}
         </div>`;
         return;
@@ -700,6 +975,11 @@
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         return;
       }
+      const editBtn = e.target.closest('[data-edit]');
+      if (editBtn) {
+        openEditor(Number(editBtn.getAttribute('data-edit')));
+        return;
+      }
       if (e.target.id === 'retryBtn') loadData();
       if (e.target.id === 'clearFilters') {
         filterTag = '';
@@ -707,12 +987,212 @@
         filterStatus = '';
         $('q').value = '';
         [...$('use').querySelectorAll('button')].forEach((b) => b.classList.toggle('is-on', b.getAttribute('data-use') === ''));
-        [...$('statusPills').querySelectorAll('button')].forEach((b) => b.classList.toggle('is-on', b.getAttribute('data-status') === ''));
+        [...$('statusPills').querySelectorAll('button[data-status]')].forEach((b) => b.classList.toggle('is-on', b.getAttribute('data-status') === ''));
         buildTagPills();
         render();
       }
     });
 
+    $('showArchived').addEventListener('click', () => {
+      showArchived = !showArchived;
+      $('showArchived').classList.toggle('is-on', showArchived);
+      $('showArchived').setAttribute('aria-pressed', showArchived ? 'true' : 'false');
+      render();
+    });
+
+    function getStoredPw() {
+      try { return localStorage.getItem(PW_KEY) || ''; } catch (err) { return ''; }
+    }
+    function setStoredPw(pw) {
+      try {
+        if (pw) localStorage.setItem(PW_KEY, pw);
+        else localStorage.removeItem(PW_KEY);
+      } catch (err) {}
+      syncLockBtn();
+    }
+    function syncLockBtn() {
+      const btn = $('lockBtn');
+      if (!btn) return;
+      btn.hidden = !getStoredPw();
+    }
+
+    function showToast(msg) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { el.hidden = true; }, 2400);
+    }
+
+    function apiPost(payload) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      }).then((r) => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      });
+    }
+
+    function setOverlay(id, open) {
+      $(id).hidden = !open;
+      const anyOpen = !$('editOverlay').hidden || !$('pwOverlay').hidden;
+      document.body.classList.toggle('sheet-open', anyOpen);
+    }
+
+    function syncEditStatusUI() {
+      [...$('editStatuses').querySelectorAll('[data-edit-status]')].forEach((b) => {
+        b.classList.toggle('is-on', b.getAttribute('data-edit-status') === pendingStatus);
+      });
+      const archived = pendingStatus === '已封存';
+      const btn = $('archiveBtn');
+      btn.textContent = archived ? '取消封存' : '封存';
+      btn.classList.toggle('is-on', archived);
+    }
+
+    function openEditor(i) {
+      const r = DATA[i];
+      if (!r) return;
+      editIndex = i;
+      pendingStatus = r['狀態'] || '想試';
+      $('editItemTitle').textContent = r['標題'] || '';
+      $('editNote').value = r['心得筆記'] || '';
+      $('editError').hidden = true;
+      $('editError').textContent = '';
+      syncEditStatusUI();
+      setOverlay('editOverlay', true);
+    }
+
+    function closeEditor() {
+      setOverlay('editOverlay', false);
+      editIndex = -1;
+    }
+
+    function closePassword(value) {
+      setOverlay('pwOverlay', false);
+      $('pwInput').value = '';
+      $('pwError').hidden = true;
+      const resolve = pwResolver;
+      pwResolver = null;
+      if (resolve) resolve(value);
+    }
+
+    function openPasswordDialog() {
+      return new Promise((resolve) => {
+        pwResolver = resolve;
+        $('pwInput').value = '';
+        $('pwError').hidden = true;
+        $('pwError').textContent = '';
+        setOverlay('pwOverlay', true);
+        setTimeout(() => $('pwInput').focus(), 50);
+      });
+    }
+
+    function ensurePassword() {
+      const existing = getStoredPw();
+      if (existing) return Promise.resolve(existing);
+      return openPasswordDialog();
+    }
+
+    function submitPassword() {
+      const pw = $('pwInput').value;
+      if (!pw) {
+        $('pwError').textContent = '請輸入密碼';
+        $('pwError').hidden = false;
+        return;
+      }
+      $('pwOk').disabled = true;
+      apiPost({ password: pw, action: 'check' })
+        .then((res) => {
+          if (res && res.ok) {
+            setStoredPw(pw);
+            closePassword(pw);
+            return;
+          }
+          const msg = (res && res.error) ? res.error : '密碼錯誤';
+          if (msg === '密碼錯誤') setStoredPw('');
+          $('pwError').textContent = msg;
+          $('pwError').hidden = false;
+        })
+        .catch((err) => {
+          $('pwError').textContent = (err && err.message) ? err.message : '無法確認密碼';
+          $('pwError').hidden = false;
+        })
+        .finally(() => { $('pwOk').disabled = false; });
+    }
+
+    function saveEditor() {
+      const r = DATA[editIndex];
+      if (!r) return;
+      const note = $('editNote').value;
+      $('editError').hidden = true;
+      $('editSave').disabled = true;
+      ensurePassword().then((pw) => {
+        if (!pw) return;
+        return apiPost({
+          password: pw,
+          id: r['ID'],
+          status: pendingStatus,
+          note: note
+        }).then((res) => {
+          if (!res || !res.ok) {
+            const msg = (res && res.error) ? res.error : '儲存失敗';
+            if (msg === '密碼錯誤') {
+              setStoredPw('');
+              $('editError').textContent = '密碼錯誤';
+              $('editError').hidden = false;
+              return openPasswordDialog().then((next) => { if (next) return saveEditor(); });
+            }
+            $('editError').textContent = msg;
+            $('editError').hidden = false;
+            return;
+          }
+          const updated = res.row || Object.assign({}, r, { '狀態': pendingStatus, '心得筆記': note });
+          const id = String(updated['ID'] != null ? updated['ID'] : r['ID']);
+          const idx = DATA.findIndex((row) => String(row['ID']) === id);
+          if (idx >= 0) DATA[idx] = updated;
+          closeEditor();
+          setStats();
+          buildTagPills();
+          render();
+          showToast(updated['狀態'] === '已封存' ? '已封存' : '已更新');
+        });
+      }).catch((err) => {
+        $('editError').textContent = (err && err.message) ? err.message : '儲存失敗';
+        $('editError').hidden = false;
+      }).finally(() => { $('editSave').disabled = false; });
+    }
+
+    $('editStatuses').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-edit-status]');
+      if (!btn) return;
+      pendingStatus = btn.getAttribute('data-edit-status');
+      syncEditStatusUI();
+    });
+    $('archiveBtn').addEventListener('click', () => {
+      pendingStatus = pendingStatus === '已封存' ? '想試' : '已封存';
+      syncEditStatusUI();
+    });
+    $('editCancel').addEventListener('click', closeEditor);
+    $('editSave').addEventListener('click', saveEditor);
+    $('editOverlay').addEventListener('click', (e) => { if (e.target.id === 'editOverlay') closeEditor(); });
+    $('pwCancel').addEventListener('click', () => closePassword(''));
+    $('pwOk').addEventListener('click', submitPassword);
+    $('pwOverlay').addEventListener('click', (e) => { if (e.target.id === 'pwOverlay') closePassword(''); });
+    $('pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPassword(); });
+    $('lockBtn').addEventListener('click', () => {
+      setStoredPw('');
+      showToast('已鎖定，下次修改再輸入密碼');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (!$('pwOverlay').hidden) closePassword('');
+      else if (!$('editOverlay').hidden) closeEditor();
+    });
+
+    syncLockBtn();
     loadData();
   </script>
 </body>
