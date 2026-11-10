@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AI 知識庫</title>
+  <base target="_blank">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F3F0EA;
+      --bg-elevated: rgba(243, 240, 234, 0.86);
+      --surface: #FFFcf7;
+      --ink: #1B1916;
+      --ink-soft: #5C574F;
+      --muted: #8A847B;
+      --line: #E4DFD6;
+      --accent: #2E5A4C;
+      --accent-soft: #E4EFE9;
+      --shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 10px 28px rgba(28, 25, 23, 0.06);
+      --radius: 18px;
+      --want: #C4891C;
+      --want-bg: #F8E9C4;
+      --tried: #2F7A45;
+      --tried-bg: #D8EEDC;
+      --used: #1F6B5A;
+      --used-bg: #D3EBE4;
+      --skip: #6B6660;
+      --skip-bg: #E8E6E2;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141311;
+        --bg-elevated: rgba(20, 19, 17, 0.88);
+        --surface: #1E1C19;
+        --ink: #F3EEE6;
+        --ink-soft: #B8B1A6;
+        --muted: #8E877C;
+        --line: #322F2A;
+        --accent: #8FBFB0;
+        --accent-soft: #24332E;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.38);
+        --want: #E0B35A;
+        --want-bg: #3A2F16;
+        --tried: #7DC48E;
+        --tried-bg: #1C3324;
+        --used: #7EBEAE;
+        --used-bg: #1A322C;
+        --skip: #A8A29A;
+        --skip-bg: #2A2825;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
+    body {
+      font-family: "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: calc(32px + var(--safe-bottom));
+    }
+    button, input { font-family: inherit; }
+    button { color: inherit; }
+    a { color: var(--accent); }
+
+    .wrap {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* Hero */
+    .hero {
+      padding: calc(28px + var(--safe-top)) 0 20px;
+    }
+    .kicker {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(28px, 7vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+    .sub {
+      margin: 8px 0 0;
+      font-size: 14px;
+      color: var(--ink-soft);
+      max-width: 28em;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .stat {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 12px;
+      box-shadow: 0 1px 2px rgba(28, 25, 23, 0.03);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .stat-num {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Sticky filters */
+    .filters {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--bg-elevated);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 0 12px;
+    }
+    .search {
+      position: relative;
+    }
+    .search svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 0 14px 0 42px;
+      font-size: 16px;
+      color: var(--ink);
+      outline: none;
+      min-width: 0;
+    }
+    .search input::placeholder { color: var(--muted); }
+    .search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .pills-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      min-width: 0;
+    }
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+    }
+    .pill {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-soft);
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.3;
+      cursor: pointer;
+      max-width: 100%;
+      white-space: normal;
+      text-align: center;
+      word-break: break-word;
+    }
+    .pill:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+    .pill.is-on {
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: 1px;
+      background: currentColor;
+    }
+    .pill[data-status="想試"] .dot { background: var(--want); }
+    .pill[data-status="試過了"] .dot { background: var(--tried); }
+    .pill[data-status="已用在工作"] .dot { background: var(--used); }
+    .pill[data-status="不適合"] .dot { background: var(--skip); }
+
+    .seg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 4px;
+      width: max-content;
+      max-width: 100%;
+    }
+    .seg button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      border-radius: 9px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+    .seg button.is-on {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* List */
+    #list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 16px 0 0;
+      min-width: 0;
+    }
+    @media (min-width: 760px) {
+      #list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      #list:has(> .card:only-of-type),
+      #list:has(> .state) { grid-template-columns: minmax(0, 1fr); }
+      #list > .card:only-of-type { max-width: 640px; }
+      .hero { padding-top: calc(40px + var(--safe-top)); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      min-width: 0;
+      overflow: hidden;
+      border-top: 3px solid var(--line);
+    }
+    .card[data-status="想試"] { border-top-color: var(--want); }
+    .card[data-status="試過了"] { border-top-color: var(--tried); }
+    .card[data-status="已用在工作"] { border-top-color: var(--used); }
+    .card[data-status="不適合"] { border-top-color: var(--skip); }
+
+    .card-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .badge-想試 { background: var(--want-bg); color: var(--want); }
+    .badge-試過了 { background: var(--tried-bg); color: var(--tried); }
+    .badge-已用在工作 { background: var(--used-bg); color: var(--used); }
+    .badge-不適合 { background: var(--skip-bg); color: var(--skip); }
+
+    .platform {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      min-width: 0;
+      max-width: 100%;
+    }
+    .platform svg { flex: 0 0 auto; }
+    .platform span { overflow-wrap: break-word; }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.4;
+      overflow-wrap: break-word;
+    }
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      overflow-wrap: break-word;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+      min-width: 0;
+    }
+    .tag {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+    .summary {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--ink-soft);
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .summary.is-clamp {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+      white-space: normal;
+    }
+    .more {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      display: none;
+    }
+    .card.is-open .more { display: block; }
+    .lbl {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 12px 0 4px;
+    }
+    .lbl:first-child { margin-top: 0; }
+    .txt {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--ink-soft);
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .src-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+    @media (prefers-color-scheme: dark) {
+      .src-btn { color: #141311; }
+    }
+    .src-btn svg { flex: 0 0 auto; }
+
+    .toggle {
+      appearance: none;
+      border: 0;
+      background: none;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 0 2px;
+      cursor: pointer;
+    }
+
+    /* States */
+    .skeletons { display: contents; }
+    .skel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-height: 180px;
+    }
+    .skel-line, .skel-bar {
+      background: linear-gradient(90deg, var(--line) 25%, color-mix(in srgb, var(--line) 50%, var(--surface)) 50%, var(--line) 75%);
+      background-size: 200% 100%;
+      animation: shine 1.2s ease-in-out infinite;
+      border-radius: 8px;
+    }
+    .skel-bar { height: 14px; width: 30%; margin-bottom: 14px; }
+    .skel-line { height: 12px; margin-bottom: 8px; }
+    .skel-line.w80 { width: 80%; }
+    .skel-line.w95 { width: 95%; }
+    .skel-line.w60 { width: 60%; }
+    @keyframes shine {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--ink-soft);
+    }
+    .state h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: var(--ink);
+    }
+    .state p { margin: 0; font-size: 14px; overflow-wrap: break-word; }
+    .retry {
+      appearance: none;
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .clear-btn {
+      appearance: none;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 4px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <p class="kicker">個人知識庫</p>
+      <h1>AI 知識庫</h1>
+      <p class="sub">收集你想學的、想試的，再親自驗證。</p>
+      <div class="stats" id="stats" aria-live="polite">
+        <div class="stat"><span class="stat-label">總數</span><span class="stat-num">—</span></div>
+        <div class="stat"><span class="stat-label">想試</span><span class="stat-num">—</span></div>
+        <div class="stat"><span class="stat-label">已嘗試</span><span class="stat-num">—</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="wrap">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.5-3.5" stroke-linecap="round"></path>
+        </svg>
+        <input id="q" type="search" placeholder="搜尋標題、摘要、標籤…" autocomplete="off" enterkeyhint="search">
+      </div>
+      <div class="pills-block">
+        <div class="seg" id="use" role="tablist" aria-label="用途">
+          <button type="button" data-use="" class="is-on">全部</button>
+          <button type="button" data-use="工作">工作</button>
+          <button type="button" data-use="副業">副業</button>
+          <button type="button" data-use="兩者皆可">兩者皆可</button>
+        </div>
+        <div class="pills" id="statusPills" aria-label="狀態">
+          <button type="button" class="pill is-on" data-status="">全部狀態</button>
+          <button type="button" class="pill" data-status="想試"><span class="dot"></span>想試</button>
+          <button type="button" class="pill" data-status="試過了"><span class="dot"></span>試過了</button>
+          <button type="button" class="pill" data-status="已用在工作"><span class="dot"></span>已用在工作</button>
+          <button type="button" class="pill" data-status="不適合"><span class="dot"></span>不適合</button>
+        </div>
+        <div class="pills" id="tagPills" aria-label="標籤"></div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div id="list">
+      <div class="skeletons" id="skeletons">
+        <div class="skel"><div class="skel-bar"></div><div class="skel-line w95"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>
+        <div class="skel"><div class="skel-bar"></div><div class="skel-line w95"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let DATA = [];
+    let filterTag = '';
+    let filterUse = '';
+    let filterStatus = '';
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+    }[c]));
+    const linkify = (s) => esc(s).replace(
+      /(https?:\/\/[^\s，；、）)]+)/g,
+      '<a href="$1" rel="noopener noreferrer">$1</a>'
+    );
+    const tagsOf = (r) => String(r['分類標籤'] || '')
+      .split(/[,，、]/).map((t) => t.trim()).filter(Boolean);
+
+    const ICONS = {
+      Facebook: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.8-4.7 4.54-4.7 1.32 0 2.7.24 2.7.24v2.97h-1.52c-1.5 0-1.97.93-1.97 1.89v2.26h3.34l-.53 3.49h-2.81V24C19.61 23.09 24 18.1 24 12.07z"/></svg>',
+      Instagram: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#f58529"/><stop offset="0.5" stop-color="#dd2a7b"/><stop offset="1" stop-color="#8134af"/></linearGradient></defs><path fill="url(#ig)" d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5.2A4.8 4.8 0 1 0 16.8 12 4.8 4.8 0 0 0 12 7.2zm0 7.9A3.1 3.1 0 1 1 15.1 12 3.1 3.1 0 0 1 12 15.1zM18.4 6a1.1 1.1 0 1 0 1.1 1.1A1.1 1.1 0 0 0 18.4 6z"/></svg>',
+      Threads: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.3 11.3c-.1-2.3-1.4-3.6-3.9-3.7-1.7-.1-3.2.6-3.7 1.8l1.5.7c.3-.7 1.1-1.1 2.2-1.1 1.4.1 2.1.7 2.2 2.2-1-.2-2-.2-3.1 0-2.3.3-3.8 1.6-3.6 3.6.1 1.5 1.2 2.6 2.9 2.6 1.4 0 2.5-.6 3.1-1.7.3.9.8 1.4 1.7 1.5v-1.6c-.3 0-.5-.2-.6-.6v-4.7zm-3.6 4.6c-1 0-1.6-.5-1.6-1.3 0-1.1.8-1.6 2.4-1.8 1-.1 1.8 0 2.5.2-.2 1.8-1.4 2.9-3.3 2.9z"/></svg>',
+      YouTube: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12l-6.2 3.6z"/></svg>',
+      X: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.2 2h3.2l-7 8 8.2 12h-6.4l-5-6.6L5.6 22H2.4l7.5-8.6L2 2h6.6l4.5 6L18.2 2zm-1.1 17.8h1.8L7 4.1H5.1l12 15.7z"/></svg>',
+      Twitter: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.2 2h3.2l-7 8 8.2 12h-6.4l-5-6.6L5.6 22H2.4l7.5-8.6L2 2h6.6l4.5 6L18.2 2zm-1.1 17.8h1.8L7 4.1H5.1l12 15.7z"/></svg>',
+      LinkedIn: '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0A66C2" d="M4.98 3.5A2.5 2.5 0 1 1 5 8.5a2.5 2.5 0 0 1-.02-5zM3.5 9h3v12h-3zM9 9h2.9v1.6h.04c.4-.8 1.4-1.7 2.9-1.7 3.1 0 3.7 2 3.7 4.6V21h-3v-6.5c0-1.6 0-3.6-2.2-3.6s-2.5 1.7-2.5 3.5V21H9z"/></svg>'
+    };
+
+    function platformIcon(name) {
+      const key = Object.keys(ICONS).find((k) => String(name || '').toLowerCase().includes(k.toLowerCase()));
+      return ICONS[key] || '<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    }
+
+    function setStats() {
+      const want = DATA.filter((r) => r['狀態'] === '想試').length;
+      const tried = DATA.filter((r) => r['狀態'] && r['狀態'] !== '想試').length;
+      $('stats').innerHTML = [
+        ['總數', DATA.length],
+        ['想試', want],
+        ['已嘗試', tried]
+      ].map(([label, n]) =>
+        `<div class="stat"><span class="stat-label">${label}</span><span class="stat-num">${n}</span></div>`
+      ).join('');
+    }
+
+    function buildTagPills() {
+      const all = [...new Set(DATA.flatMap(tagsOf))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+      const box = $('tagPills');
+      if (!all.length) { box.innerHTML = ''; return; }
+      box.innerHTML = `<button type="button" class="pill${filterTag ? '' : ' is-on'}" data-tag="">全部標籤</button>` +
+        all.map((t) => `<button type="button" class="pill${filterTag === t ? ' is-on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('');
+    }
+
+    function hasExtra(r) {
+      return !!(r['可以怎麼用'] || r['心得筆記'] || r['備註'] || r['嘗試日期'] || r['原始連結']);
+    }
+
+    function cardHtml(r, i) {
+      const st = r['狀態'] || '';
+      const tg = tagsOf(r);
+      const extra = hasExtra(r);
+      const date = r['收錄日期'] || '';
+      const author = r['作者'] || '';
+      const use = r['用途'] || '';
+      const meta = [date, author, use].filter(Boolean).join(' · ');
+      return `<article class="card" data-status="${esc(st)}" data-i="${i}">
+        <div class="card-top">
+          ${st ? `<span class="badge badge-${esc(st)}">${esc(st)}</span>` : '<span></span>'}
+          <span class="platform">${platformIcon(r['來源平台'])}<span>${esc(r['來源平台'] || '')}</span></span>
+        </div>
+        <h2>${esc(r['標題'])}</h2>
+        ${meta ? `<div class="meta">${esc(meta)}</div>` : ''}
+        ${tg.length ? `<div class="tags">${tg.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        ${r['重點摘要'] ? `<div class="summary is-clamp" id="sum-${i}">${linkify(r['重點摘要'])}</div>` : ''}
+        ${extra ? `<button type="button" class="toggle" data-toggle="${i}" aria-expanded="false">展開</button>` : ''}
+        ${extra ? `<div class="more" id="more-${i}">
+          ${r['可以怎麼用'] ? `<div class="lbl">可以怎麼用</div><div class="txt">${linkify(r['可以怎麼用'])}</div>` : ''}
+          ${r['嘗試日期'] ? `<div class="lbl">嘗試日期</div><div class="txt">${esc(r['嘗試日期'])}</div>` : ''}
+          ${r['心得筆記'] ? `<div class="lbl">心得筆記</div><div class="txt">${linkify(r['心得筆記'])}</div>` : ''}
+          ${r['備註'] ? `<div class="lbl">備註</div><div class="txt">${linkify(r['備註'])}</div>` : ''}
+          ${r['原始連結'] ? `<a class="src-btn" href="${esc(r['原始連結'])}" rel="noopener noreferrer">開啟原始貼文
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>` : ''}
+        </div>` : ''}
+      </article>`;
+    }
+
+    function render() {
+      const q = $('q').value.trim().toLowerCase();
+      const rows = DATA.filter((r) =>
+        (!q || Object.values(r).join(' ').toLowerCase().includes(q)) &&
+        (!filterTag || tagsOf(r).includes(filterTag)) &&
+        (!filterUse || r['用途'] === filterUse) &&
+        (!filterStatus || r['狀態'] === filterStatus)
+      );
+      const filtered = !!(q || filterTag || filterUse || filterStatus);
+      if (!rows.length) {
+        $('list').innerHTML = `<div class="state">
+          <h3>沒有符合的項目</h3>
+          <p>${DATA.length ? '試試調整篩選條件，或改一下關鍵字。' : '知識庫還沒有內容。'}</p>
+          ${filtered ? '<button type="button" class="clear-btn" id="clearFilters">清除篩選</button>' : ''}
+        </div>`;
+        return;
+      }
+      $('list').innerHTML = rows.map((r) => cardHtml(r, DATA.indexOf(r))).join('');
+    }
+
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzuutoTIaHlChYmNWFe9umWDLTpmaH73_G5XtO_2do-ijJLfF721Ut55hXHzeWklYWcVQ/exec';
+
+    function loadData() {
+      $('list').innerHTML = `<div class="skeletons" id="skeletons">
+        <div class="skel"><div class="skel-bar"></div><div class="skel-line w95"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>
+        <div class="skel"><div class="skel-bar"></div><div class="skel-line w95"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>
+      </div>`;
+      fetch(API_URL + '?format=json', { redirect: 'follow' })
+        .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then((d) => {
+          DATA = Array.isArray(d) ? d : [];
+          setStats();
+          buildTagPills();
+          render();
+        })
+        .catch((e) => {
+          const msg = (e && e.message) ? e.message : String(e || '未知錯誤');
+          $('stats').innerHTML = '<div class="stat"><span class="stat-label">讀取失敗</span></div>';
+          $('list').innerHTML = `<div class="state">
+            <h3>資料讀取失敗</h3>
+            <p>${esc(msg)}</p>
+            <button type="button" class="retry" id="retryBtn">再試一次</button>
+          </div>`;
+        });
+    }
+
+    $('q').addEventListener('input', render);
+
+    $('use').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-use]');
+      if (!btn) return;
+      filterUse = btn.getAttribute('data-use') || '';
+      [...$('use').querySelectorAll('button')].forEach((b) => b.classList.toggle('is-on', b === btn));
+      render();
+    });
+
+    $('statusPills').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-status]');
+      if (!btn) return;
+      filterStatus = btn.getAttribute('data-status') || '';
+      [...$('statusPills').querySelectorAll('button')].forEach((b) => b.classList.toggle('is-on', b === btn));
+      render();
+    });
+
+    $('tagPills').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-tag]');
+      if (!btn) return;
+      filterTag = btn.getAttribute('data-tag') || '';
+      buildTagPills();
+      render();
+    });
+
+    document.addEventListener('click', (e) => {
+      const toggle = e.target.closest('[data-toggle]');
+      if (toggle) {
+        const card = toggle.closest('.card');
+        const open = card.classList.toggle('is-open');
+        const sum = card.querySelector('.summary');
+        if (sum) sum.classList.toggle('is-clamp', !open);
+        toggle.textContent = open ? '收合' : '展開';
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        return;
+      }
+      if (e.target.id === 'retryBtn') loadData();
+      if (e.target.id === 'clearFilters') {
+        filterTag = '';
+        filterUse = '';
+        filterStatus = '';
+        $('q').value = '';
+        [...$('use').querySelectorAll('button')].forEach((b) => b.classList.toggle('is-on', b.getAttribute('data-use') === ''));
+        [...$('statusPills').querySelectorAll('button')].forEach((b) => b.classList.toggle('is-on', b.getAttribute('data-status') === ''));
+        buildTagPills();
+        render();
+      }
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
